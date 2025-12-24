@@ -12,7 +12,7 @@ from astrbot.core.star.filter.permission import PermissionType
 
 from .core.executor import LikeExecutor
 from .core.llm import LLMAction
-from .core.scheduler import DailyRandomTimeScheduler
+from .core.scheduler import RandomScheduler
 from .core.subscribe import SubscribeManager
 from .core.utils import get_ats, is_friend
 
@@ -28,7 +28,7 @@ class QQlikePlugin(Star):
         # 点赞执行器
         self.executor: LikeExecutor | None = None
         # 定时器
-        self.scheduler: DailyRandomTimeScheduler | None = None
+        self.scheduler: RandomScheduler | None = None
 
     # ==================== 生命周期 =====================
 
@@ -43,9 +43,10 @@ class QQlikePlugin(Star):
 
         # 实例化定时器
         if not self.scheduler and self.executor and self.conf["auto_like"]:
-            self.scheduler = DailyRandomTimeScheduler(
+            self.scheduler = RandomScheduler(
                 task=self.executor.like_random,
                 job_prefix="AutoLike",
+                on_refresh =self.subs.reset_all
             )
 
     async def terminate(self):
