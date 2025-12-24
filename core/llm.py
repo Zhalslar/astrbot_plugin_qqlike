@@ -149,7 +149,7 @@ JSON 格式：
         event: AiocqhttpMessageEvent,
     ) -> str | None:
         """生成 权限限制 的回复"""
-        scenario = "对方想让你给Ta点赞，但又设了权限不许你这个陌生人赞Ta"
+        scenario = "对方想让你给Ta点赞，但Ta设了权限不许你这个陌生人赞Ta"
 
         prompt = self._build_prompt(self.conf["llm_permission_style"], scenario)
         raw = await self._get_llm_respond(event, prompt)
