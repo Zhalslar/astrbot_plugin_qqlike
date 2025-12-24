@@ -1,0 +1,68 @@
+{
+    "need_prefix": {
+        "description": "赞我指令需加前缀",
+        "type": "bool",
+        "hint": "[指令触发] 不加前缀的话容易和其他Bot一起刷屏",
+        "default": true
+    },
+    "random_like_prob": {
+        "description": "随机点赞的概率",
+        "type": "float",
+        "hint": "[随机触发] 当用户和 Bot 聊天互动时，Bot 会按概率随机给互动的用户点赞",
+        "slider": {
+            "min": 0,
+            "max": 0.01,
+            "step": 0.0001
+        },
+        "default": 0.002
+    },
+    "auto_like": {
+        "description": "定时点赞开关",
+        "type": "bool",
+        "hint": "[定时触发] 开启后每天自动给订阅点赞的用户点赞，注意点赞时间是随机的",
+        "default": true
+    },
+    "subscribe_data": {
+        "description": "订阅点赞的用户数据",
+        "type": "list",
+        "hint": "此列表用来存储订阅点赞用户的数据，格式为：[{QQ: 当天点赞个数n}], 可通过命令增删，也可在面板上增删",
+        "default": []
+    },
+    "per_like_times": {
+        "description": "每次点多少个赞",
+        "type": "int",
+        "hint": "三种触发方式触发时, 都会执行一次点赞并累计点赞个数，直到当天给对应用户点满20个赞后不再触发",
+        "slider": {
+            "min": 1,
+            "max": 20,
+            "step": 1
+        },
+        "default": 5
+    },
+    "only_like_friend": {
+        "description": "只对好友点赞",
+        "type": "bool",
+        "hint": "开启后，非好友无法触发点赞，也无法订阅点赞",
+        "default": true
+    },
+    "llm_success_style": {
+        "description": "点赞成功回复风格",
+        "type": "string",
+        "default": "像真人一样自然，有点开心，不要太官方，不超过20字"
+    },
+    "llm_limit_style": {
+        "description": "点赞达到上限回复风格",
+        "type": "string",
+        "default": "像朋友一样提醒，带点调侃，但不阴阳怪气，不超过20字"
+    },
+    "llm_stranger_style": {
+        "description": "不给陌生人点赞回复风格",
+        "type": "string",
+        "default": "冷淡但克制，不骂人，不超过15字"
+    },
+    "llm_permission_style": {
+        "description": "因陌生人无法点赞的回复风格",
+        "type": "string",
+        "default": "嘲讽，厌愚，不超过15字"
+    }
+}
