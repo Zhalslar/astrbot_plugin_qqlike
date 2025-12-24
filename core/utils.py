@@ -10,7 +10,6 @@ async def is_friend(client: CQHttp, user_id: int | str) -> bool:
     """判断 user_id 是否为好友"""
     friend_list = await client.get_friend_list()
     friend_ids = [str(f["user_id"]) for f in friend_list]
-    print(friend_ids)
     return str(user_id) in friend_ids
 
 
