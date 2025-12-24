@@ -56,7 +56,7 @@ class QQlikePlugin(Star):
 
     # ==================== 命令 =====================
 
-    @filter.command("订阅点赞")
+    @filter.command("订阅赞", alias={"订阅点赞"})
     async def subscribe_like(self, event: AiocqhttpMessageEvent):
         """订阅点赞，Bot将每日自动给你点赞"""
         sender_id = event.get_sender_id()
@@ -68,7 +68,7 @@ class QQlikePlugin(Star):
             return
         yield event.plain_result("订阅成功！我将每天自动为你点赞")
 
-    @filter.command("取消订阅点赞")
+    @filter.command("退订赞", alias={"退订点赞"})
     async def unsubscribe_like(self, event: AiocqhttpMessageEvent):
         """取消订阅点赞"""
         if not self.subs.remove(event.get_sender_id()):
@@ -76,7 +76,7 @@ class QQlikePlugin(Star):
             return
         yield event.plain_result("已取消订阅！我将不再自动给你点赞")
 
-    @filter.command("订阅点赞列表")
+    @filter.command("订阅者", alias={"订阅点赞列表"})
     async def like_list(self, event: AiocqhttpMessageEvent):
         """查看谁订阅了点赞"""
         users = self.subs.all_user_ids()
