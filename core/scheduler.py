@@ -4,19 +4,15 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 
 from astrbot.api import logger
 
 
-class DailyRandomTimeScheduler:
+class RandomScheduler:
     """
-    每天 00:00 刷新一次，在当天随机时间执行一次任务的定时器。
-
-    特性：
-    - 时区安全
-    - 任务幂等（每天只会执行一次）
-    - 仅依赖 async callable，方便跨项目复用
+    每个周期刷新一次，在当天随机时间执行一次任务的定时器。
     """
 
     def __init__(
@@ -25,63 +21,68 @@ class DailyRandomTimeScheduler:
         *,
         job_prefix: str = "DailyRandomTask",
         timezone: str = "Asia/Shanghai",
+        cron_expr: str = "0 0 * * *",  # 默认是每天 00:00
+        on_refresh: Callable[[], None] | None = None,
     ) -> None:
         self._task = task
+        self._on_refresh = on_refresh
         self._job_prefix = job_prefix
         self._timezone = zoneinfo.ZoneInfo(timezone)
+        self._cron_expr = cron_expr
 
         self._scheduler = AsyncIOScheduler(timezone=self._timezone)
         self._scheduler.start()
 
-        self._schedule_next_daily_refresh()
+        self._refresh_cycle_task()
 
-    def _schedule_next_daily_refresh(self) -> None:
-        """安排下一次 00:00 的刷新任务"""
-        now = datetime.now(self._timezone)
-        next_midnight = (now + timedelta(days=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-
+    def _schedule_next_refresh(self) -> None:
+        """安排下一周期的刷新任务"""
         self._scheduler.add_job(
-            func=self._refresh_today_task,
-            trigger=DateTrigger(run_date=next_midnight),
-            id=f"{self._job_prefix}:daily_refresh:{int(next_midnight.timestamp())}",
+            func=self._refresh_cycle_task,
+            trigger=CronTrigger.from_crontab(self._cron_expr, timezone=self._timezone),
+            id=f"{self._job_prefix}:cycle_refresh",
             replace_existing=True,
             max_instances=1,
         )
 
         logger.debug(
-            f"[{self._job_prefix}] 已安排下次刷新时间：{next_midnight}",
+            f"[{self._job_prefix}] 已用 cron「{self._cron_expr}」安排周期刷新",
         )
 
-    def _refresh_today_task(self) -> None:
-        """
-        随机生成今天的执行时间，并安排一次性任务
-        """
+    def _refresh_cycle_task(self) -> None:
         now = datetime.now(self._timezone)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=0)
-
-        if now >= today_end:
-            logger.warning(f"[{self._job_prefix}] 今日已结束，跳过任务安排")
-            self._schedule_next_daily_refresh()
+        cron = CronTrigger.from_crontab(self._cron_expr, timezone=self._timezone)
+        next_refresh = cron.get_next_fire_time(None, now)
+        if next_refresh is None:
+            logger.warning(f"[{self._job_prefix}] 周期表达式无效，跳过")
             return
 
-        seconds_range = int((today_end - now).total_seconds())
+        seconds_range = int((next_refresh - now).total_seconds())
+        if seconds_range <= 0:
+            logger.warning(f"[{self._job_prefix}] 周期已结束，跳过")
+            self._schedule_next_refresh()
+            return
+
         offset_seconds = random.randint(0, seconds_range)
         run_at = now + timedelta(seconds=offset_seconds)
+        logger.info(f"[{self._job_prefix}] 本次周期内任务执行时间已随机生成：{run_at}")
 
-        logger.info(f"[{self._job_prefix}] 今日任务执行时间已随机生成：{run_at}")
+        if self._on_refresh:
+           try:
+               self._on_refresh()
+           except Exception:
+               logger.error(f"[{self._job_prefix}] on_refresh 异常，忽略")
 
+        period_id = int(next_refresh.timestamp())
         self._scheduler.add_job(
             func=self._run_task_safe,
             trigger=DateTrigger(run_date=run_at),
-            id=f"{self._job_prefix}:once:{int(run_at.timestamp())}",
+            id=f"{self._job_prefix}:once:{period_id}",
             replace_existing=True,
             max_instances=1,
         )
 
-        # 预先安排下一天的刷新
-        self._schedule_next_daily_refresh()
+        self._schedule_next_refresh()
 
     async def _run_task_safe(self) -> None:
         """
