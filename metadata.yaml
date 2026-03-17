@@ -4,4 +4,6 @@ desc: 给用户的 QQ 名片点赞, 支持用命令触发、聊天时随机触�
 help: 略
 version: v1.0.0 
 author: Zhalslar 
-repo: https://github.com/Futureppo/astrbot_plugin_qqlike
+repo: https://github.com/Zhalslar/astrbot_plugin_qqlike
+support_platforms:
+  - aiocqhttp
